@@ -77,7 +77,7 @@ func ParseDerivationPath(path string) (DerivationPath, error) {
 	case strings.TrimSpace(components[0]) == "":
 		return nil, errors.New("ambiguous path: use 'm/' prefix for absolute paths, or no leading '/' for relative ones")
 
-	case strings.TrimSpace(components[0]) == "m":
+	case strings.ToLower(strings.TrimSpace(components[0])) == "m":
 		components = components[1:]
 
 	default:
@@ -157,7 +157,9 @@ func DefaultIterator(base DerivationPath) func() DerivationPath {
 	path := make(DerivationPath, len(base))
 	copy(path[:], base[:])
 	// Set it back by one, so the first call gives the first result
-	path[len(path)-1]--
+	if path[len(path)-1] > 0 {
+		path[len(path)-1]--
+	}
 	return func() DerivationPath {
 		path[len(path)-1]++
 		return path

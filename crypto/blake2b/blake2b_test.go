@@ -19,11 +19,14 @@ func TestHashes(t *testing.T) {
 		useSSE4, useAVX, useAVX2 = sse4, avx, avx2
 	}(useSSE4, useAVX, useAVX2)
 
-	if useAVX2 {
-		t.Log("AVX2 version")
-		testHashes(t)
-		useAVX2 = false
-	}
+	t.Run("AVX2", func(t *testing.T) {
+    	if useAVX2 {
+        	old := useAVX2
+        	useAVX2 = true
+        	testHashes(t)
+        	useAVX2 = old
+    	}
+	})
 	if useAVX {
 		t.Log("AVX version")
 		testHashes(t)
@@ -319,8 +322,21 @@ func benchmarkWrite(b *testing.B, size int, sse4, avx, avx2 bool) {
 	h, _ := New512(nil)
 	b.SetBytes(int64(size))
 	for b.Loop() {
-		h.Write(data)
+    	h.Reset()
+    	h.Write(data)
 	}
+}
+
+func TestRandomInputs(t *testing.T) {
+    data := make([]byte, 1024)
+    generateSequence(data, 12345)
+
+    h1 := Sum512(data)
+    h2 := Sum512(data)
+
+    if !bytes.Equal(h1[:], h2[:]) {
+        t.Fatalf("hash mismatch on identical input")
+    }
 }
 
 func BenchmarkWrite128Generic(b *testing.B) { benchmarkWrite(b, 128, false, false, false) }

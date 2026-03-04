@@ -240,15 +240,20 @@ func (am *Manager) Subscribe(sink chan<- WalletEvent) event.Subscription {
 //
 // The original slice is assumed to be already sorted by URL.
 func merge(slice []Wallet, wallets ...Wallet) []Wallet {
-	for _, wallet := range wallets {
-		n := sort.Search(len(slice), func(i int) bool { return slice[i].URL().Cmp(wallet.URL()) >= 0 })
-		if n == len(slice) {
-			slice = append(slice, wallet)
-			continue
-		}
-		slice = append(slice[:n], append([]Wallet{wallet}, slice[n:]...)...)
-	}
-	return slice
+    for _, wallet := range wallets {
+        n := sort.Search(len(slice), func(i int) bool { return slice[i].URL().Cmp(wallet.URL()) >= 0 })
+
+        if n < len(slice) && slice[n].URL() == wallet.URL() {
+            continue
+        }
+
+        if n == len(slice) {
+            slice = append(slice, wallet)
+            continue
+        }
+        slice = append(slice[:n], append([]Wallet{wallet}, slice[n:]...)...)
+    }
+    return slice
 }
 
 // drop is the counterpart of merge, which looks up wallets from within the sorted
